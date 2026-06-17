@@ -1,0 +1,1030 @@
+/* =========================== */
+/* CSS Variables (Light Theme) */
+/* =========================== */
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --toolbar-bg: #ffffff;
+  --toolbar-border: #cccccc;
+  --editor-bg: #ffffff;
+  --editor-border: #cccccc;
+  --splitter-bg: #e0e0e0;
+  --map-bg: #ffffff;
+  --html-bg: #fafafa;
+  --html-border: #cccccc;
+  --log-bg: rgba(0,0,0,0.88);
+  --log-color: #0f0;
+  --toast-bg: rgba(60,60,60,0.95);
+  --toast-color: #ffffff;
+  --menu-bg: #ffffff;
+  --menu-border: #cccccc;
+  --menu-item-border: #e5e5e5;
+  --menu-hover: #f0f0f0;
+  --btn-sep: #d0d0d0;
+  --table-border: #cfcfcf;
+  --table-head-bg: #f3f3f3;
+  --code-bg: #f4f4f4;
+}
+
+/* =========================== */
+/* Dark Theme Overrides        */
+/* =========================== */
+html.dark {
+  --bg: #1e1e1e;
+  --text: #d4d4d4;
+  --toolbar-bg: #252526;
+  --toolbar-border: #3e3e42;
+  --editor-bg: #1e1e1e;
+  --editor-border: #3e3e42;
+  --splitter-bg: #3e3e42;
+  --map-bg: #1e1e1e;
+  --html-bg: #252526;
+  --html-border: #3e3e42;
+  --log-bg: rgba(0,0,0,0.9);
+  --log-color: #0f0;
+  --toast-bg: #333333;
+  --toast-color: #ffffff;
+  --menu-bg: #2d2d2d;
+  --menu-border: #3e3e42;
+  --menu-item-border: #3e3e42;
+  --menu-hover: #3e3e42;
+  --btn-sep: #3e3e42;
+  --table-border: #555555;
+  --table-head-bg: #3a3a3a;
+  --code-bg: #2a2a2a;
+  --btn-bg: #2d2d30;
+  --btn-hover: #3a3a3d;
+  --btn-active: #434346;
+  --btn-border: #555;
+
+}
+
+/* Toolbar button contrast in dark mode */
+html.dark #toolbar .btnGroup > button {
+  background: var(--btn-bg);
+  border-color: var(--btn-border);
+}
+
+html.dark #toolbar .btnGroup > button:hover {
+  background: var(--btn-hover);
+}
+
+html.dark #toolbar .btnGroup > button:active {
+  background: var(--btn-active);
+}
+
+html.dark #toolbar .btnGroup > button:focus-visible {
+  outline: 2px solid #4fc3f7;
+  outline-offset: 2px;
+}
+
+
+/* =========================== */
+/* Global styles               */
+/* =========================== */
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: system-ui;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#toolbar {
+  position: fixed; top:0; left:0; right:0;
+  display:flex; align-items:center; gap:8px;
+  padding: 4px 8px;
+  background: var(--toolbar-bg);
+  border-bottom:1px solid var(--toolbar-border);
+  z-index:10;
+  flex-wrap: nowrap;
+}
+
+.btnGroup{ display:flex; align-items:center; gap:6px; }
+
+.btnSep{
+  width:1px;
+  height:24px;
+  background: var(--btn-sep);
+}
+
+#toolbar .btnGroup > button{
+  height:28px;
+  font-size:12px;
+  padding:0 8px;
+  background: var(--toolbar-bg);
+  color: var(--text);
+  border: 1px solid var(--toolbar-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* ===========================
+   Compact Mode
+   =========================== */
+html.compact #toolbar {
+  padding: 2px 6px;
+}
+
+html.compact #toolbar .btnGroup > button {
+  height: 24px;
+  padding: 0 5px;
+  font-size: 11px;
+}
+
+html.compact #saveStatus {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+/* Default: show full label, hide short label */
+#hotReloadCtl .hotLabelShort {
+  display: none;
+}
+
+/* Compact mode: show HR, hide full text */
+html.compact #hotReloadCtl .hotLabelFull {
+  display: none;
+}
+
+html.compact #hotReloadCtl .hotLabelShort {
+  display: inline;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+/* Optional: tighten spacing in compact mode */
+html.compact #hotReloadCtl {
+  gap: 4px;
+}
+
+#grpFile > button{ width:32px; padding:0; }
+
+#saveStatus {
+  margin-left: auto;
+  font-size: 11px;
+  opacity: 0.65;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+
+#layout {
+  position: absolute;
+  top: var(--toolbar-h, 56px);
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+#editor { width: 30%; min-width: 200px; border-right: 1px solid var(--editor-border); background: var(--editor-bg); }
+
+#editor textarea {
+  width: 100%; height: 100%; border: none; padding: 10px;
+  font-family: ui-monospace, monospace;
+  background: var(--editor-bg);
+  color: var(--text);
+  resize: none;
+}
+
+/* =========================== */
+/* Editor Overlay Controls */
+/* =========================== */
+
+#editor {
+  position: relative;
+}
+
+#editorOverlayControls {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 45;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 7px;
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--toolbar-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+
+  backdrop-filter: blur(6px);
+}
+
+#editorOverlayControls button {
+  width: 30px;
+  height: 28px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 13px;
+  line-height: 1;
+
+  background: var(--toolbar-bg);
+  color: var(--text);
+  border: 1px solid var(--toolbar-border);
+  border-radius: 6px;
+
+  cursor: pointer;
+  user-select: none;
+}
+
+#editorOverlayControls button:hover {
+  background: var(--menu-hover);
+}
+
+#editorOverlayControls button:active {
+  transform: translateY(1px);
+}
+
+html.dark #editorOverlayControls {
+  background: rgba(37, 37, 38, 0.88);
+  border-color: var(--toolbar-border);
+}
+
+html.dark #editorOverlayControls button {
+  background: var(--btn-bg);
+  border-color: var(--btn-border);
+  color: var(--text);
+}
+
+html.dark #editorOverlayControls button:hover {
+  background: var(--btn-hover);
+}
+
+html.compact #editorOverlayControls {
+  right: 10px;
+  bottom: 10px;
+  padding: 5px;
+  gap: 4px;
+}
+
+html.compact #editorOverlayControls button {
+  width: 26px;
+  height: 24px;
+  font-size: 12px;
+}
+
+#viewer { flex: 1; display: flex; min-width: 0; overflow: hidden;}
+
+#mapPane { flex: 1; display: flex; min-width: 0; overflow: hidden; background: var(--map-bg); }
+
+#mapPane pre.markmap { flex: 1; margin: 0; }
+
+#mapSvg { width: 100%; height: 100%; background: var(--map-bg); }
+
+#htmlPane {
+  flex: 1 1 30%;
+  width: auto;
+  min-width: 200px;
+  display: none;
+  padding: 12px;
+  overflow: auto;
+  border-left: 1px solid var(--html-border);
+  background: var(--html-bg);
+  color: var(--text);
+}
+
+/* =========================== */
+/* Map Overlay Controls */
+/* =========================== */
+
+#mapPane {
+  position: relative;
+}
+
+#mapOverlayControls {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  z-index: 25;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 7px;
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--toolbar-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+
+  backdrop-filter: blur(6px);
+}
+
+#mapOverlayControls button {
+  width: 30px;
+  height: 28px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 13px;
+  line-height: 1;
+
+  background: var(--toolbar-bg);
+  color: var(--text);
+  border: 1px solid var(--toolbar-border);
+  border-radius: 6px;
+
+  cursor: pointer;
+  user-select: none;
+}
+
+#mapOverlayControls button:hover {
+  background: var(--menu-hover);
+}
+
+#mapOverlayControls button:active {
+  transform: translateY(1px);
+}
+
+html.dark #mapOverlayControls {
+  background: rgba(37, 37, 38, 0.88);
+  border-color: var(--toolbar-border);
+}
+
+html.dark #mapOverlayControls button {
+  background: var(--btn-bg);
+  border-color: var(--btn-border);
+  color: var(--text);
+}
+
+html.dark #mapOverlayControls button:hover {
+  background: var(--btn-hover);
+}
+
+html.compact #mapOverlayControls {
+  right: 10px;
+  bottom: 10px;
+  padding: 5px;
+  gap: 4px;
+}
+
+html.compact #mapOverlayControls button {
+  width: 26px;
+  height: 24px;
+  font-size: 12px;
+}
+
+.splitter { width: 6px; cursor: col-resize; background: var(--splitter-bg); }
+
+#logs {
+  position: fixed; right: 10px; bottom: 10px;
+  width: 600px; height: 280px;
+  background: var(--log-bg); color: var(--log-color);
+  display: none; padding: 8px; font: 12px ui-monospace;
+  overflow: auto; resize: both; z-index: 9999;
+  border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,.25);
+  border: 1px solid var(--menu-border);
+}
+
+#logs pre { margin: 0; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+
+#file { display: none; }
+
+/* Toast notifications */
+#toast{
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translate(-50%, 10px);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font: 13px system-ui;
+  color: var(--toast-color);
+  background: var(--toast-bg);
+  box-shadow: 0 10px 30px rgba(0,0,0,.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease;
+  z-index: 10001;
+  max-width: min(680px, 92vw);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid var(--menu-border);
+}
+
+#toast.show{
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+#toast.ok{ background: rgba(30, 136, 56, 0.95); }
+#toast.download{ background: rgba(2, 119, 189, 0.95); }
+#toast.error{ background: rgba(198, 40, 40, 0.95); }
+
+/* Dropdown menus */
+.menu{
+  position: fixed;
+  background: var(--menu-bg);
+  border: 1px solid var(--menu-border);
+  border-radius: 10px;
+  padding: 6px;
+  min-width: 320px;
+  max-width: min(520px, 92vw);
+  box-shadow: 0 12px 30px rgba(0,0,0,.12);
+  z-index: 10002;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text);
+}
+
+.menu .menuList{
+  max-height: 220px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.menu .menuItem{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  background: var(--menu-bg);
+  border: 1px solid var(--menu-item-border);
+  color: var(--text);
+}
+
+.menu .menuItem:hover { background: var(--menu-hover); }
+
+.menu .menuIcon{ width: 20px; font-size: 16px; }
+.menu .menuText{ flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.menu .menuItem.danger{ border-color: #f3c7c7; }
+.menu .menuItem.danger:hover{ background: #ffecec; }
+
+.menu .menuHeader{ padding: 4px 10px; font-size: 12px; opacity: .7; }
+.menu .menuSep{ height: 1px; background: #eee; margin: 2px 0; }
+
+#htmlPane img { max-width: 100%; height: auto; }
+
+/* Mindmap image constraints */
+#mapSvg .markmap-node img,
+#mapSvg foreignObject img {
+  max-width: 180px;
+  max-height: 110px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+#mapSvg foreignObject {
+  overflow: hidden;
+}
+
+/* CodeMirror dark adjustments */
+
+html.dark .cm-editor { background: var(--editor-bg); color: var(--text); }
+html.dark .cm-editor .cm-scroller { background: var(--editor-bg); }
+html.dark .cm-editor .cm-gutters { background: var(--editor-bg); border-right: 1px solid var(--editor-border); color: #858585; }
+html.dark .cm-editor .cm-activeLineGutter { background: #2a2d2e; }
+html.dark .cm-editor .cm-activeLine { background: #2a2d2e; }
+html.dark .cm-editor .cm-selectionBackground { background: #264f78; }
+html.dark .cm-editor .cm-cursor { border-left-color: #aeafad; }
+
+/* Make markdown formatting markers like ### stand out in dark mode */
+html.dark .cm-editor .cm-formatting,
+html.dark .cm-editor .cm-formatting-header,
+html.dark .cm-editor span.cm-formatting,
+html.dark .cm-editor span.cm-formatting.cm-formatting-header {
+  color: #e6b3ff !important;
+  font-weight: 700;
+  opacity: 1;
+}
+
+
+html.dark .cm-editor .cm-header,
+html.dark .cm-editor .cm-heading {
+  color: #e7e7e7;
+  font-weight: 700;
+}
+
+/* =========================== */
+/* CodeMirror selection visibility */
+/* Makes selected text visible even on active line */
+/* =========================== */
+
+.cm-editor .cm-selectionBackground,
+.cm-editor.cm-focused .cm-selectionBackground,
+.cm-editor .cm-content ::selection {
+  background-color: rgba(34, 197, 94, 0.38) !important;
+}
+
+html.dark .cm-editor .cm-selectionBackground,
+html.dark .cm-editor.cm-focused .cm-selectionBackground,
+html.dark .cm-editor .cm-content ::selection {
+  background-color: rgba(34, 197, 94, 0.48) !important;
+}
+
+.cm-editor .cm-activeLine .cm-selectionBackground,
+html.dark .cm-editor .cm-activeLine .cm-selectionBackground {
+  background-color: rgba(34, 197, 94, 0.58) !important;
+}
+
+/* =========================== */
+/* Editor Overlay Tools Panel */
+/* Fixed 3-row editing toolbar */
+/* =========================== */
+
+#editorOverlayControls.__expanded #editorBtnEditToggle {
+  background: var(--menu-hover);
+  outline: 2px solid #22c55e;
+  outline-offset: 1px;
+}
+
+.editorOverlayToolsPanel {
+  position: absolute;
+  right: 14px;
+  bottom: 58px;
+  z-index: 44;
+
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+
+  width: max-content;
+  max-width: min(360px, calc(100% - 28px));
+
+  padding: 7px;
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--toolbar-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(6px);
+}
+
+.editorOverlayToolsPanel[hidden] {
+  display: none !important;
+}
+
+.editorOverlayToolRow {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.editorOverlayToolRow + .editorOverlayToolRow {
+  padding-top: 6px;
+  border-top: 1px solid var(--toolbar-border);
+}
+
+.editorOverlayToolsPanel button {
+  width: 30px;
+  height: 28px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 13px;
+  line-height: 1;
+
+  background: var(--toolbar-bg);
+  color: var(--text);
+  border: 1px solid var(--toolbar-border);
+  border-radius: 6px;
+
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.editorOverlayToolsPanel button:hover {
+  background: var(--menu-hover);
+}
+
+.editorOverlayToolsPanel button:active {
+  transform: translateY(1px);
+}
+
+.editorOverlayToolsPanel button[data-heading-level] {
+  width: 34px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.editorOverlayToolsPanel button[data-editor-command="boldItalic"] {
+  width: 34px;
+  font-size: 11px;
+}
+
+.editorOverlayToolsPanel button[data-editor-command="inlineCode"] {
+  width: 38px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+}
+
+.editorOverlayToolsPanel button[data-editor-command="checkboxUnchecked"],
+.editorOverlayToolsPanel button[data-editor-command="checkboxChecked"] {
+  font-size: 15px;
+}
+
+html.dark #editorOverlayControls.__expanded #editorBtnEditToggle {
+  background: var(--btn-hover);
+  outline-color: #22c55e;
+}
+
+html.dark .editorOverlayToolsPanel {
+  background: rgba(37, 37, 38, 0.88);
+  border-color: var(--toolbar-border);
+}
+
+html.dark .editorOverlayToolsPanel button {
+  background: var(--btn-bg);
+  border-color: var(--btn-border);
+  color: var(--text);
+}
+
+html.dark .editorOverlayToolsPanel button:hover {
+  background: var(--btn-hover);
+}
+
+html.compact .editorOverlayToolsPanel {
+  right: 10px;
+  bottom: 44px;
+  padding: 5px;
+  gap: 4px;
+  max-width: min(320px, calc(100% - 20px));
+}
+
+html.compact .editorOverlayToolRow {
+  gap: 4px;
+}
+
+html.compact .editorOverlayToolRow + .editorOverlayToolRow {
+  padding-top: 4px;
+}
+
+html.compact .editorOverlayToolsPanel button {
+  width: 26px;
+  height: 24px;
+  font-size: 12px;
+}
+
+html.compact .editorOverlayToolsPanel button[data-heading-level] {
+  width: 30px;
+  font-size: 10px;
+}
+
+
+html.compact .editorOverlayToolsPanel button[data-editor-command="boldItalic"] {
+  width: 30px;
+  font-size: 10px;
+}
+
+html.compact .editorOverlayToolsPanel button[data-editor-command="inlineCode"] {
+  width: 34px;
+  font-size: 10px;
+}
+
+
+
+
+
+/* Mindmap node text fill */
+html.dark .markmap-node text { fill: #d4d4d4; }
+html.dark .markmap-node foreignObject div { color: #d4d4d4; }
+html.dark .markmap-link { stroke-opacity: 0.8; stroke-width: 2px;}
+html.dark .markmap-node circle { fill: #444; stroke: #666; }
+
+/* Hot reload status */
+#hotStatus { color: var(--text); }
+
+/* Fallback textarea */
+body.cmFailed #editor textarea { display: block !important; }
+body.cmFailed #cmHost { display: none !important; }
+#cmHost { height: 100%; }
+#editor textarea { display: none; }
+.cm-editor .cm-content { overflow-wrap: anywhere; }
+
+
+#htmlPane pre.shiki {
+  padding: 12px;
+  border-radius: 8px;
+  overflow: auto;
+  border: 1px solid var(--html-border);
+}
+
+#htmlPane pre.shiki code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+}
+
+
+#htmlPane :not(pre) > code {
+  background: var(--code-bg);
+  color: var(--text);
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.9em;
+}
+
+#htmlPane table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+}
+
+#htmlPane th,
+#htmlPane td {
+  border: 1px solid var(--table-border);
+  padding: 6px 8px;
+}
+
+#htmlPane thead th {
+  background: var(--table-head-bg);
+  font-weight: 700;
+}
+
+#htmlPane tbody tr:nth-child(even) {
+  background: rgba(127, 127, 127, 0.06);
+}
+
+.code-block {
+  position: relative;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 12px;
+  padding: 2px 6px;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.copy-btn:hover {
+  opacity: 1;
+}
+
+.markmap-node.__active text {
+  font-weight: 700;
+  fill: #1976d2;
+}
+
+.markmap-node.__active foreignObject div {
+  font-weight: 700;
+  color: #1976d2;
+}
+
+html.dark .markmap-node.__active text {
+  fill: #4fc3f7;
+}
+
+html.dark .markmap-node.__active foreignObject div {
+  color: #4fc3f7;
+}
+
+/* Style modal */
+.styleModal {
+  position: fixed;
+  inset: 0;
+  z-index: 10020;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.styleModalPanel {
+  width: min(620px, 92vw);
+  max-height: min(760px, 88vh);
+  overflow: auto;
+
+  background: var(--menu-bg);
+  color: var(--text);
+  border: 1px solid var(--menu-border);
+  border-radius: 14px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+  padding: 14px;
+}
+
+.styleModalHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.styleModalTitle {
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.styleModalSub {
+  font-size: 12px;
+  opacity: 0.72;
+  margin-top: 2px;
+}
+
+#mapStyleClose {
+  width: 32px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--toolbar-border);
+  background: var(--toolbar-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.styleModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.styleSection {
+  border: 1px solid var(--menu-border);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(127,127,127,0.05);
+}
+
+.styleSection h3 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.styleOptionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 8px;
+}
+
+.styleChoice {
+  border: 1px solid var(--menu-border);
+  background: var(--menu-bg);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.styleChoice:hover {
+  background: var(--menu-hover);
+}
+
+.styleChoice.__selected {
+  outline: 2px solid #22c55e;
+  border-color: #22c55e;
+}
+
+.styleChoiceTitle {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.styleChoiceSub {
+  font-size: 11px;
+  opacity: 0.72;
+  margin-top: 2px;
+}
+
+.styleSwatches {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.styleSwatch {
+  width: 18px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.15);
+}
+
+.styleModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--menu-border);
+}
+
+.styleModalFooter button {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--toolbar-border);
+  background: var(--toolbar-bg);
+  color: var(--text);
+  cursor: pointer;
+}
+
+#mapStyleReset {
+  margin-right: auto;
+}
+
+#mapStyleApply {
+  background: #22c55e;
+  color: #06120a;
+  border-color: #22c55e;
+  font-weight: 700;
+}
+
+html.dark #mapStyleApply {
+  color: #06120a;
+}
+
+/* =========================== */
+/* Markmap Style Modifier — clean final CSS */
+/* Default keeps original Markmap colors */
+/* Custom themes override colors */
+/* =========================== */
+
+#mapPane {
+  --mme-map-bg: var(--map-bg);
+  --mme-mm-text: var(--text);
+  --mme-mm-link: #999999;
+  --mme-mm-circle-fill: #ffffff;
+  --mme-mm-circle-stroke: #999999;
+  --mme-mm-active: #1976d2;
+  --mme-mm-link-dash: none;
+  --mme-mm-link-width: 2px;
+}
+
+/* Keep default text readable, but do not force color in Default mode */
+#mapSvg .markmap-node text {
+  opacity: 1 !important;
+}
+
+#mapSvg .markmap-node foreignObject,
+#mapSvg .markmap-node foreignObject div {
+  opacity: 1 !important;
+}
+
+/* Link style is allowed in both Default and custom themes */
+#mapSvg .markmap-link {
+  stroke-dasharray: var(--mme-mm-link-dash, none) !important;
+  stroke-width: var(--mme-mm-link-width, 2px) !important;
+  stroke-opacity: 0.95 !important;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Only custom themes should control map colors */
+#mapPane.mme-map-styled {
+  background: var(--mme-map-bg) !important;
+}
+
+#mapPane.mme-map-styled #mapSvg {
+  background: var(--mme-map-bg) !important;
+}
+
+#mapPane.mme-map-styled #mapSvg .markmap-node text {
+  fill: var(--mme-mm-text) !important;
+  opacity: 1 !important;
+}
+
+#mapPane.mme-map-styled #mapSvg .markmap-node foreignObject,
+#mapPane.mme-map-styled #mapSvg .markmap-node foreignObject div {
+  color: var(--mme-mm-text) !important;
+  opacity: 1 !important;
+}
+
+#mapPane.mme-map-styled #mapSvg .markmap-node.__active text {
+  fill: var(--mme-mm-active) !important;
+  font-weight: 700;
+}
+
+#mapPane.mme-map-styled #mapSvg .markmap-node.__active foreignObject div {
+  color: var(--mme-mm-active) !important;
+  font-weight: 700;
+}
+
+/* Default active node keeps your original active styling */
+#mapSvg .markmap-node.__active text {
+  opacity: 1 !important;
+}
+
+#mapSvg .markmap-node.__active foreignObject div {
+  opacity: 1 !important;
+}

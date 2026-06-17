@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>MarkmapEditor</title>
+
+  <meta name="theme-color" content="#4F46E5">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+  <!-- External libraries (Markmap + Markdown) -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-lib"></script>
+  <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Import map (CodeMirror) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "codemirror/": "https://deno.land/x/codemirror_esm@v6.0.1/esm/"
+    }
+  }
+  </script>
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body>
+<div id="toolbar">
+
+ <div class="btnGroup" id="grpFile">
+  <button id="btnOpen" title="Open">📂</button>
+  <input type="file" id="file" accept=".md,.markdown,.txt" />
+  <div id="recentMenu" class="menu" style="display:none"></div>
+
+  <label id="hotReloadCtl" title="Ativar/desativar hot reload" style="display:flex;align-items:center;gap:6px;font-size:12px;user-select:none;">
+   <input type="checkbox" id="hotEnabled" checked />
+   <span class="hotLabelFull">Hot reload</span>
+  <span class="hotLabelShort" aria-hidden="true">HR</span>
+  </label>
+  <span id="hotStatus" style="font-size:12px;opacity:.75;white-space:nowrap;"></span>
+
+  <button id="btnSave" title="Save">💾</button>
+ </div>
+
+ <div class="btnSep" aria-hidden="true"></div>
+
+
+<div class="btnGroup" id="grpInsert">
+  <button id="btnAddImage" title="Add image">🖼️</button>
+  <button id="btnTemplatesMarkmap" title="Templates Markmap">🧠 Markmap ▾</button>
+  <button id="btnTemplatesPandoc" title="Templates Pandoc">📊 Pandoc ▾</button>
+
+  <input type="file" id="imageFile" accept="image/png,image/jpeg" style="display:none" />
+  <div id="imageMenu" class="menu" style="display:none"></div>
+  <div id="tplMenu" class="menu" style="display:none"></div>
+  <div id="tplPandocMenu" class="menu" style="display:none"></div>
+</div>
+
+<div class="btnSep" aria-hidden="true"></div>
+
+
+<div class="btnGroup" id="grpViews">
+  <button id="btnToggleEditor"
+          data-icon="🗂️"
+          title="Toggle editor"
+          aria-label="Toggle editor">🗂️</button>
+
+  <button id="btnLogs"
+          data-icon="📜"
+          title="Toggle logs"
+          aria-label="Toggle logs">📜</button>
+
+  <button id="btnHtml"
+          data-icon="</>"
+          title="Toggle HTML"
+          aria-label="Toggle HTML">&lt;/&gt;</button>
+  <button id="btnCompact" title="Toggle compact mode">⚡</button>
+</div>
+
+
+
+
+ <div class="btnSep" aria-hidden="true"></div>
+
+<div class="btnGroup" id="grpLevels">
+  <button id="btnExportMenu" title="Export options">⬇️ Export ▾</button>
+  <div id="exportMenu" class="menu" style="display:none"></div>
+</div>
+
+
+ <span id="saveStatus"></span>
+</div>
+<div id="layout">
+<div id="editor">
+
+<div id="editorOverlayControls" aria-label="Editor controls">
+  <button id="editorBtnSearch" type="button" title="Search & Replace: Ctrl+F / Ctrl+H">🔍</button>
+  <button id="editorBtnEditToggle" type="button" title="Show edit tools" aria-expanded="false">✏️</button>
+  <button id="editorBtnCopyMd" type="button" title="Copy Markdown">📋</button>
+</div>
+
+<div id="editorOverlayToolsPanel" class="editorOverlayToolsPanel" hidden aria-label="Editor edit tools">
+  <div class="editorOverlayToolRow editorOverlayToolRowInsert" aria-label="Insert tools">
+    <button type="button" data-editor-command="link" title="Insert link">🔗</button>
+    <button type="button" data-editor-command="inlineCode" title="Inline code">&lt;/&gt;</button>
+    <button type="button" data-editor-command="bullet" title="Unordered list">•</button>
+    <button type="button" data-editor-command="ordered" title="Ordered list">1.</button>
+    <button type="button" data-editor-command="checkboxUnchecked" title="Unchecked checkbox">⬜</button>
+    <button type="button" data-editor-command="checkboxChecked" title="Checked checkbox">✅</button>
+  </div>
+
+  <div class="editorOverlayToolRow editorOverlayToolRowFormat" aria-label="Formatting tools">
+    <button type="button" data-editor-command="bold" title="Bold"><strong>B</strong></button>
+    <button type="button" data-editor-command="italic" title="Italic"><em>I</em></button>
+    <button type="button" data-editor-command="boldItalic" title="Bold Italic"><strong><em>BI</em></strong></button>
+    <button type="button" data-editor-command="strike" title="Strikethrough"><s>S</s></button>
+    <button type="button" data-editor-command="indent" title="Indent">↦</button>
+    <button type="button" data-editor-command="outdent" title="Outdent">↤</button>
+  </div>
+
+  <div class="editorOverlayToolRow editorOverlayToolRowHeading" aria-label="Heading tools">
+    <button type="button" data-heading-level="1" title="H1 Title">H1</button>
+    <button type="button" data-heading-level="2" title="H2 Section">H2</button>
+    <button type="button" data-heading-level="3" title="H3 Subsection">H3</button>
+    <button type="button" data-heading-level="4" title="H4">H4</button>
+    <button type="button" data-heading-level="5" title="H5">H5</button>
+    <button type="button" data-heading-level="0" title="Remove heading">↩</button>
+  </div>
+</div>
+
+  <div id="cmHost"></div>
+  <textarea id="md">
+
+# 🧠 Markmap Journal — Release 40 Dev Split
+
+## OKF Workspace Refactor and Implementation Plan
+
+## Phase 1 — Create a Refactor Branch
+
+1. Keep the current installed PWA as the stable production version.
+2. Create a new development copy of the project.
+3. Rename the new version internally:
+   - Release 40 Dev
+   - OKF Workspace Beta
+4. Accept that this development version may break temporarily.
+5. Do not modify the stable installed version.
+6. Create a simple changelog file:
+   - CHANGELOG.md
+7. Create a technical notes file:
+   - ARCHITECTURE.md
+
+
+## Phase 2 — Split the Single-File App
+
+1. Extract CSS from `index.html`.
+
+2. Create CSS files:
+   - css/app.css
+   - css/layout.css
+   - css/theme.css
+   - css/editor.css
+   - css/sidebar.css
+   - css/overlays.css
+
+3. Extract JavaScript from `index.html`.
+
+4. Create the initial JS files:
+   - js/main.js
+   - js/core/state.js
+   - js/core/utils.js
+   - js/core/logger.js
+   - js/core/toast.js
+   - js/ui/dark-mode.js
+   - js/ui/menus.js
+   - js/editor/editor.js
+   - js/render/markmap-renderer.js
+   - js/storage/file-access.js
+
+5. Keep the first split simple.
+   Do not over-optimize imports yet.
+
+6. Make `index.html` responsible only for:
+   - loading CSS
+   - loading library scripts
+   - defining the app shell
+   - loading `js/main.js`
+
+7. After extraction, verify the old features:
+   - editor loads
+   - Markmap renders
+   - open file works
+   - save works
+   - dark mode works
+   - export menu opens
+
+8. Do not add OKF Workspace features until the modular split boots cleanly.
+
+
+## Phase 3 — Define Central App State
+
+1. Create `js/core/state.js`.
+
+2. Add central state objects:
+
+   appState:
+     mode: "single-file" | "workspace-file" | "aggregation"
+     dirty: false
+     readOnly: false
+     activeView: "editor-map" | "editor-html" | "map-only"
+     previousView: null
+
+   fileState:
+     currentFileHandle
+     currentFileName
+     currentPath
+     currentRaw
+     currentBody
+     currentMeta
+     hasFrontmatter
+
+   workspaceState:
+     isOpen: false
+     rootHandle: null
+     rootName: null
+     files: []
+     fileIndexByPath: {}
+     activePath: null
+     lastScanAt: null
+     lastAggregation: null
+
+3. Replace scattered global variables gradually.
+
+4. Do not try to replace every global at once.
+
+5. First stabilize:
+   - current file handle
+   - dirty state
+   - active mode
+   - read-only state
+
+6. Add mode guard helpers:
+   - isSingleFileMode()
+   - isWorkspaceFileMode()
+   - isAggregationMode()
+   - canSave()
+   - canArchive()
+   - canEdit()
+
+7. Use these guards before save, archive, auto-save, and hot reload.
+
+
+## Phase 4 — Create OKF Parser and Serializer
+
+1. Create `js/okf/parser.js`.
+
+2. Implement:
+
+   parseOkfMarkdown(rawText):
+     - detect YAML frontmatter only if file starts with "---"
+     - split frontmatter and body
+     - parse simple key/value fields
+     - parse simple arrays
+     - return meta, body, frontmatterRaw, parseError
+
+3. Create `js/okf/serializer.js`.
+
+4. Implement:
+
+   serializeOkfMarkdown(meta, body):
+     - update `updated`
+     - serialize frontmatter
+     - append body
+
+5. Add system metadata fields:
+
+   okf: 0.1
+   type: journal | concept
+   category: meeting | project | rfc | sop | general
+   title: string
+   created: YYYY-MM-DD
+   updated: YYYY-MM-DD
+   tags: []
+   system_tags: []
+
+6. Keep frontmatter hidden in the app editor.
+
+7. The editor should receive only the body.
+
+8. Markmap should receive only the body.
+
+9. HTML preview should receive only the body.
+
+10. Raw physical files should keep frontmatter.
+
+
+## Phase 5 — Add Visible User Tags in Editor
+
+1. Decide the body-visible tag format:
+
+   Tags: #customer #pricing #meeting-prep
+
+2. Add parser helper:
+
+   extractVisibleUserTags(body):
+     - find first line beginning with "Tags:"
+     - extract hashtags
+     - return array
+
+3. Add update helper:
+
+   syncVisibleTagsToFrontmatter(meta, body):
+     - extract visible tags
+     - write them into meta.tags
+     - preserve body text
+
+4. On file open:
+   - if meta.tags exists
+   - ensure visible `Tags:` line exists near top of body
+   - do not duplicate it
+
+5. On save:
+   - parse visible `Tags:` line
+   - update frontmatter tags
+   - serialize frontmatter + body
+
+6. Hide system tags from the editor.
+
+7. Keep system tags only in frontmatter:
+   - journal
+   - concept
+   - meeting
+   - project
+   - rfc
+   - sop
+   - task
+
+
+## Phase 6 — Implement Workspace Folder Bootstrap
+
+1. Create `js/storage/workspace.js`.
+
+2. Add `openWorkspace()`.
+
+3. On button click:
+   - call `showDirectoryPicker({ mode: "readwrite" })`
+   - require Chrome/Chromium support
+   - store the directory handle in IndexedDB if possible
+
+4. After opening:
+   - ensure base folders exist:
+     - journals/
+     - concepts/
+     - assets/
+     - archive/
+     - system/
+
+5. If folders do not exist:
+   - create them
+
+6. If permission is denied:
+   - show read-only workspace state
+   - disable create, save, and archive
+
+7. Add workspace status indicator:
+   - No workspace
+   - Workspace open
+   - Workspace read-only
+   - Permission required
+
+
+## Phase 7 — Implement Workspace Scanner
+
+1. Create `js/workspace/scanner.js`.
+
+2. Scan only these folders first:
+   - journals/
+   - concepts/
+
+3. Ignore:
+   - archive/
+   - assets/
+   - system/
+   - hidden folders
+   - generated exports
+
+4. Read Markdown files:
+   - .md
+   - .markdown
+
+5. For each file:
+   - read raw text
+   - parse OKF frontmatter
+   - extract body
+   - classify as journal, concept, or unknown
+   - store relative path
+
+6. Build records:
+
+   {
+     path,
+     folder,
+     name,
+     handle,
+     type,
+     category,
+     title,
+     date,
+     tags,
+     systemTags,
+     created,
+     updated,
+     bodyPreview,
+     parseError
+   }
+
+7. Sort journals:
+   - newest date first
+
+8. Sort concepts:
+   - alphabetically by title
+
+9. Store results in:
+   - workspaceState.files
+   - workspaceState.fileIndexByPath
+
+10. Add manual refresh button.
+
+
+## Phase 8 — Build Workspace Sidebar
+
+1. Create `js/workspace/sidebar.js`.
+
+2. Add left sidebar layout.
+
+3. Sidebar sections:
+   - Workspace header
+   - Search
+   - Journals
+   - Concepts
+   - Aggregations
+
+4. Workspace header buttons:
+   - Open Workspace
+   - Today's Journal
+   - New Note
+   - Refresh
+   - Archive Active File
+
+5. Journals stream:
+   - show newest first
+   - display date and optional title
+
+6. Concepts stream:
+   - show title
+   - show category badge
+   - show user tags if useful
+
+7. Aggregations panel:
+   - Open Tasks
+   - Recent Notes
+   - Meetings
+   - Projects
+
+8. Keep lists flat.
+   Do not create a nested folder tree.
+
+9. Make sidebar collapsible.
+
+10. Keep editor/map split intact.
+
+
+## Phase 9 — Implement Today's Journal
+
+1. Create `js/workspace/journals.js`.
+
+2. Add `openTodaysJournal()`.
+
+3. Determine today's date:
+   - YYYY-MM-DD
+
+4. Target path:
+   - journals/YYYY-MM-DD.md
+
+5. If file exists:
+   - open it
+
+6. If file does not exist:
+   - create it with frontmatter:
+
+     ---
+     okf: 0.1
+     type: journal
+     title: YYYY-MM-DD
+     date: YYYY-MM-DD
+     created: YYYY-MM-DD
+     updated: YYYY-MM-DD
+     tags: []
+     system_tags:
+       - journal
+     ---
+
+7. Create body:
+
+   # YYYY-MM-DD
+
+   Tags:
+
+   ## Capture
+   -
+
+   ## Tasks
+   - [ ]
+
+   ## Notes
+
+8. Save the new file.
+
+9. Add it to the workspace index.
+
+10. Open it in the editor.
+
+
+## Phase 10 — Implement New Concept Templates
+
+1. Create `js/okf/templates.js`.
+
+2. Add template types:
+   - meeting
+   - project
+   - rfc
+   - sop
+   - general
+
+3. Add New Note dropdown.
+
+4. On template selection:
+   - ask for title
+   - generate slug
+   - create filename:
+     category-YYYY-MM-DD-slug-title.md
+
+5. Target path:
+   - concepts/category-YYYY-MM-DD-slug-title.md
+
+6. If filename exists:
+   - append counter:
+     - title-2.md
+     - title-3.md
+
+7. Generate frontmatter:
+
+   ---
+   okf: 0.1
+   type: concept
+   category: meeting
+   title: Title
+   created: YYYY-MM-DD
+   updated: YYYY-MM-DD
+   tags: []
+   system_tags:
+     - concept
+     - meeting
+   ---
+
+8. Generate body with visible tags:
+
+   # Title
+
+   Tags:
+
+   ## Summary
+
+   ## Notes
+
+   ## Tasks
+   - [ ]
+
+9. Save file.
+
+10. Refresh index.
+
+11. Open file.
+
+
+## Phase 11 — Adapt File Open and Save
+
+1. Create unified `openWorkspaceFile(path)`.
+
+2. On open:
+   - if current file is dirty, save or warn
+   - read raw file
+   - parse frontmatter
+   - load only body into editor
+   - keep meta in memory
+   - render Markmap from body
+   - update active path
+
+3. On save:
+   - block if mode is aggregation
+   - block if workspace is read-only
+   - read editor body
+   - sync visible user tags to meta.tags
+   - update meta.updated
+   - serialize frontmatter + body
+   - write raw file to disk
+   - update workspace index record
+
+4. Keep old single-file open/save working separately.
+
+5. Add save status:
+   - Saved
+   - Unsaved
+   - Saving
+   - Read-only
+   - Aggregation view
+
+
+## Phase 12 — Implement Debounced Workspace Auto-Save
+
+1. Use existing auto-save pattern but adapt it to workspace files.
+
+2. On editor change:
+   - mark dirty
+   - schedule save after debounce
+
+3. Recommended debounce:
+   - 1500ms
+
+4. Do not auto-save if:
+   - mode is aggregation
+   - file is read-only
+   - no active workspace file
+   - permission missing
+
+5. If auto-save fails:
+   - preserve local draft
+   - show toast
+   - keep dirty state
+
+6. Before switching files:
+   - flush pending save
+   - if save fails, ask user before switching
+
+
+## Phase 13 — Implement Archive Active File
+
+1. Create `js/storage/archive.js`.
+
+2. Replace Delete button with:
+   - Archive Active File
+
+3. Archive only works in workspace file mode.
+
+4. Archive is disabled in:
+   - aggregation mode
+   - read-only mode
+   - no active file state
+
+5. Determine source:
+   - journals/file.md
+   - concepts/file.md
+
+6. Determine destination:
+   - archive/journals/file.md
+   - archive/concepts/file.md
+
+7. If destination exists:
+   - append timestamp
+
+8. Write a copy into archive.
+
+9. After successful copy:
+   - remove original if supported safely
+   - if removal is not supported, mark original as archived in frontmatter
+
+10. Refresh workspace index.
+
+11. Open another file or clear editor.
+
+12. Show toast:
+   - File archived
+
+
+## Phase 14 — Implement Aggregation Engine
+
+1. Create `js/workspace/aggregations.js`.
+
+2. First aggregation:
+   - Open Tasks
+
+3. Aggregation searches all active workspace files.
+
+4. Match:
+   - lines containing "- [ ]"
+   - optionally lines containing "#task"
+
+5. Generate virtual markdown:
+
+   # Open Tasks
+
+   ## journals/2026-06-17.md
+   - [ ] Send supplier update
+
+   ## concepts/project-2026-06-17-alpha.md
+   - [ ] Review budget
+
+6. Build source map:
+
+   sourceMap:
+     generatedLine:
+       sourcePath
+       sourceLine
+       sourceText
+
+7. Set mode:
+   - appState.mode = "aggregation"
+   - appState.readOnly = true
+
+8. Render virtual markdown in editor as read-only.
+
+9. Render virtual markdown in Markmap.
+
+10. Disable:
+   - save
+   - auto-save
+   - archive
+   - file overwrite logic
+
+11. Show banner:
+   - Aggregation View: Open Tasks
+   - Read-only
+   - Exit Aggregation
+
+
+## Phase 15 — Implement Click-to-Source Navigation
+
+1. In aggregation mode, intercept clicks on Markmap nodes.
+
+2. Determine clicked node text.
+
+3. Resolve clicked node to source map entry.
+
+4. Save last aggregation request:
+
+   workspaceState.lastAggregation:
+     type: "open-tasks"
+     title: "Open Tasks"
+     timestamp
+
+5. Exit aggregation mode.
+
+6. Open source file.
+
+7. Scroll editor to source line if possible.
+
+8. If line number fails:
+   - search for source text
+   - if found, scroll to match
+   - otherwise open the file normally
+
+9. Show banner in source file:
+
+   Opened from Open Tasks Aggregation
+   [Back to Aggregation]
+
+10. On Back to Aggregation:
+   - regenerate the aggregation from current workspace files
+   - enter aggregation mode again
+
+11. This regeneration should reflect any edits made after opening the source file.
+
+
+## Phase 16 — Clean the Interface
+
+1. Remove or relocate controls that no longer belong in the main toolbar.
+
+2. Keep main toolbar focused:
+   - Open Workspace
+   - Save
+   - Today's Journal
+   - New Note
+   - Export
+   - View toggles
+
+3. Move context-specific controls into:
+   - sidebar
+   - editor overlay
+   - map overlay
+   - export menu
+
+4. Avoid duplicating buttons.
+
+5. Make workspace mode visually clear.
+
+6. Make aggregation mode visually unmistakable.
+
+7. Add a compact sidebar toggle.
+
+8. Keep the UI laptop-friendly.
+
+
+## Phase 17 — Restore Existing Features One by One
+
+1. After workspace basics work, re-check old features:
+
+   - Markmap rendering
+   - fold preservation
+   - zoom/pan preservation
+   - dark mode
+   - HTML preview
+   - Shiki code highlight
+   - Markdown export
+   - SVG export
+   - HTML preview export
+   - templates
+   - quick insert
+   - editor overlay
+   - image insertion
+   - recents
+   - PWA install
+   - service worker
+
+2. If a feature is broken, either:
+   - repair it immediately
+   - temporarily hide its button
+   - mark it as pending in the beta
+
+3. Do not let broken controls remain visible.
+
+
+## Phase 18 — Beta Release Checklist
+
+1. Confirm Chrome desktop behavior.
+
+2. Test with empty workspace.
+
+3. Test with existing workspace.
+
+4. Test with 50+ Markdown files.
+
+5. Test today's journal creation.
+
+6. Test concept creation:
+   - meeting
+   - project
+   - rfc
+   - sop
+   - general
+
+7. Test hidden frontmatter.
+
+8. Test visible user tags.
+
+9. Test save and auto-save.
+
+10. Test archive.
+
+11. Test Open Tasks aggregation.
+
+12. Test click-to-source.
+
+13. Test Back to Aggregation.
+
+14. Test app reload.
+
+15. Test PWA install/update.
+
+16. Write known limitations.
+
+17. Release as:
+   - Release 40 Beta: OKF Workspace
+
+- Must have:
+    - Split files/modules
+    - Workspace folder open
+    - journals/concepts/archive folders
+	- Today's Journal
+	- New Concept templates
+	- hidden frontmatter
+	- visible user tags
+	- sidebar with Journals and Concepts
+	- save/auto-save to workspace files
+	- Archive Active File
+	- Open Tasks aggregation
+	- click-to-source
+	- Back to Aggregation
+
+- Can wait:
+	- Archive browser
+	- advanced aggregations
+	- backlinks
+	- PNG export
+	- raw frontmatter editor
+	- multi-window/multi-tab behavior
+	- full mobile support
+	
+- Consider the following 	
+	- Physical Markdown files are the truth.
+	- Frontmatter stores structure.
+	- The app editor shows clean body content.
+	- Aggregations are temporary and read-only.
+	- Archive replaces delete.
+	- Chrome is the target browser.
+
+    </textarea>
+  </div>
+  <div class="splitter" id="splitEditor"></div>
+  <div id="viewer">
+
+	<div id="mapPane">
+	  <div id="mapOverlayControls" aria-label="Mindmap controls">
+	  <button id="mapBtnLevelUp" type="button" title="Expand one level">➕</button>
+	  <button id="mapBtnLevelDown" type="button" title="Collapse one level">➖</button>
+	  <button id="mapBtnFit" type="button" title="Fit map">🎯</button>
+	  <button id="mapBtnExpandAll" type="button" title="Expand all">🔼</button>
+	  <button id="mapBtnCollapseAll" type="button" title="Collapse all">🔽</button>
+	  <button id="mapBtnTheme" type="button" title="Toggle dark/light mode">🌙</button>
+	  <button id="mapBtnStyle" type="button" title="Map style">🎨</button>
+	</div>
+
+	  <svg id="mapSvg"></svg>
+	</div>
+
+    <div class="splitter" id="splitHtml"></div>
+    <div id="htmlPane"></div>
+  </div>
+</div>
+<div id="logs">
+  <pre id="log"></pre>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+
+<div id="mapStyleModal" class="styleModal" style="display:none" aria-modal="true" role="dialog">
+  <div class="styleModalPanel">
+    <div class="styleModalHeader">
+      <div>
+        <div class="styleModalTitle">🎨 Map Style</div>
+        <div class="styleModalSub">Theme, layout density, node length, and link style</div>
+      </div>
+      <button id="mapStyleClose" type="button" title="Close">×</button>
+    </div>
+
+    <div class="styleModalBody">
+      <section class="styleSection">
+        <h3>Theme</h3>
+        <div id="mapStyleThemeOptions" class="styleOptionGrid"></div>
+      </section>
+
+      <section class="styleSection">
+        <h3>Layout</h3>
+        <div id="mapStyleLayoutOptions" class="styleOptionGrid"></div>
+      </section>
+
+      <section class="styleSection">
+        <h3>Node length</h3>
+        <div id="mapStyleNodeLengthOptions" class="styleOptionGrid"></div>
+      </section>
+
+      <section class="styleSection">
+        <h3>Links</h3>
+        <div id="mapStyleLinkOptions" class="styleOptionGrid"></div>
+      </section>
+    </div>
+
+    <div class="styleModalFooter">
+      <button id="mapStyleReset" type="button">Reset to Default</button>
+      <button id="mapStyleApply" type="button">Apply</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+<!-- Template Editor Modal -->
+<div id="tplModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:20000;">
+  <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+              width:min(920px, 92vw); height:min(720px, 86vh);
+              background:var(--menu-bg); color:var(--text);
+              border:1px solid var(--menu-border); border-radius:12px;
+              box-shadow:0 16px 60px rgba(0,0,0,.28); display:flex; flex-direction:column; overflow:hidden;">
+    <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--menu-border);">
+      <strong id="tplModalTitle" style="font-size:14px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Edit template</strong>
+      <button id="tplModalCancel" type="button" style="height:30px;">Cancel</button>
+      <button id="tplModalSave" type="button" style="height:30px;">Save</button>
+    </div>
+
+    <textarea id="tplModalText"
+      style="flex:1; width:100%; border:0; padding:12px; resize:none; outline:none;
+             font: 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+             background:var(--editor-bg); color:var(--text);"
+      spellcheck="false"></textarea>
+
+    <div style="padding:8px 12px; border-top:1px solid var(--menu-border); font-size:12px; opacity:.8;">
+      Tip: Use normal multi-line editing here. Markdown headings (##) work great in Markmap.
+    </div>
+  </div>
+</div>
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>
