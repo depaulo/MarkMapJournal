@@ -1,138 +1,166 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <title>MarkmapEditor</title>
+  <head>
+    <meta charset="utf-8" />
+    <title>MarkmapEditor</title>
 
-  <meta name="theme-color" content="#4F46E5">
-  <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="./icon-192.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#4F46E5" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+    <!-- External libraries (Markmap + Markdown) -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markmap-lib"></script>
+    <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <!-- External libraries (Markmap + Markdown) -->
-  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-  <script src="https://cdn.jsdelivr.net/npm/markmap-lib"></script>
-  <script src="https://cdn.jsdelivr.net/npm/markmap-view"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Import map (CodeMirror) -->
+    <script type="importmap">
+      {
+        "imports": {
+          "codemirror/": "https://deno.land/x/codemirror_esm@v6.0.1/esm/"
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="./css/app.css" />
+  </head>
+  <body>
+    <div id="toolbar">
+      <div class="btnGroup" id="grpFile">
+        <button id="btnOpen" title="Open">📂</button>
+        <input type="file" id="file" accept=".md,.markdown,.txt" />
+        <div id="recentMenu" class="menu" style="display: none"></div>
 
-  <!-- Import map (CodeMirror) -->
-  <script type="importmap">
-  {
-    "imports": {
-      "codemirror/": "https://deno.land/x/codemirror_esm@v6.0.1/esm/"
-    }
-  }
-  </script>
-  <link rel="stylesheet" href="./css/app.css">
-</head>
-<body>
-<div id="toolbar">
+        <label
+          id="hotReloadCtl"
+          title="Ativar/desativar hot reload"
+          style="display: flex; align-items: center; gap: 6px; font-size: 12px; user-select: none"
+        >
+          <input type="checkbox" id="hotEnabled" checked />
+          <span class="hotLabelFull">Hot reload</span>
+          <span class="hotLabelShort" aria-hidden="true">HR</span>
+        </label>
+        <span id="hotStatus" style="font-size: 12px; opacity: 0.75; white-space: nowrap"></span>
 
- <div class="btnGroup" id="grpFile">
-  <button id="btnOpen" title="Open">📂</button>
-  <input type="file" id="file" accept=".md,.markdown,.txt" />
-  <div id="recentMenu" class="menu" style="display:none"></div>
+        <button id="btnSave" title="Save">💾</button>
+      </div>
 
-  <label id="hotReloadCtl" title="Ativar/desativar hot reload" style="display:flex;align-items:center;gap:6px;font-size:12px;user-select:none;">
-   <input type="checkbox" id="hotEnabled" checked />
-   <span class="hotLabelFull">Hot reload</span>
-  <span class="hotLabelShort" aria-hidden="true">HR</span>
-  </label>
-  <span id="hotStatus" style="font-size:12px;opacity:.75;white-space:nowrap;"></span>
+      <div class="btnSep" aria-hidden="true"></div>
 
-  <button id="btnSave" title="Save">💾</button>
- </div>
+      <div class="btnGroup" id="grpInsert">
+        <button id="btnAddImage" title="Add image">🖼️</button>
+        <button id="btnTemplatesMarkmap" title="Templates Markmap">🧠 Markmap ▾</button>
+        <button id="btnTemplatesPandoc" title="Templates Pandoc">📊 Pandoc ▾</button>
 
- <div class="btnSep" aria-hidden="true"></div>
+        <input type="file" id="imageFile" accept="image/png,image/jpeg" style="display: none" />
+        <div id="imageMenu" class="menu" style="display: none"></div>
+        <div id="tplMenu" class="menu" style="display: none"></div>
+        <div id="tplPandocMenu" class="menu" style="display: none"></div>
+      </div>
 
+      <div class="btnSep" aria-hidden="true"></div>
 
-<div class="btnGroup" id="grpInsert">
-  <button id="btnAddImage" title="Add image">🖼️</button>
-  <button id="btnTemplatesMarkmap" title="Templates Markmap">🧠 Markmap ▾</button>
-  <button id="btnTemplatesPandoc" title="Templates Pandoc">📊 Pandoc ▾</button>
-
-  <input type="file" id="imageFile" accept="image/png,image/jpeg" style="display:none" />
-  <div id="imageMenu" class="menu" style="display:none"></div>
-  <div id="tplMenu" class="menu" style="display:none"></div>
-  <div id="tplPandocMenu" class="menu" style="display:none"></div>
-</div>
-
-<div class="btnSep" aria-hidden="true"></div>
-
-
-<div class="btnGroup" id="grpViews">
-  <button id="btnToggleEditor"
+      <div class="btnGroup" id="grpViews">
+        <button
+          id="btnToggleEditor"
           data-icon="🗂️"
           title="Toggle editor"
-          aria-label="Toggle editor">🗂️</button>
+          aria-label="Toggle editor"
+        >
+          🗂️
+        </button>
 
-  <button id="btnLogs"
-          data-icon="📜"
-          title="Toggle logs"
-          aria-label="Toggle logs">📜</button>
+        <button id="btnLogs" data-icon="📜" title="Toggle logs" aria-label="Toggle logs">📜</button>
 
-  <button id="btnHtml"
-          data-icon="</>"
-          title="Toggle HTML"
-          aria-label="Toggle HTML">&lt;/&gt;</button>
-  <button id="btnCompact" title="Toggle compact mode">⚡</button>
-</div>
+        <button id="btnHtml" data-icon="</>" title="Toggle HTML" aria-label="Toggle HTML">
+          &lt;/&gt;
+        </button>
+        <button id="btnCompact" title="Toggle compact mode">⚡</button>
+      </div>
 
+      <div class="btnSep" aria-hidden="true"></div>
 
+      <div class="btnGroup" id="grpLevels">
+        <button id="btnExportMenu" title="Export options">⬇️ Export ▾</button>
+        <div id="exportMenu" class="menu" style="display: none"></div>
+      </div>
 
+      <span id="saveStatus"></span>
+    </div>
+    <div id="layout">
+      <div id="editor">
+        <div id="editorOverlayControls" aria-label="Editor controls">
+          <button id="editorBtnSearch" type="button" title="Search & Replace: Ctrl+F / Ctrl+H">
+            🔍
+          </button>
+          <button
+            id="editorBtnEditToggle"
+            type="button"
+            title="Show edit tools"
+            aria-expanded="false"
+          >
+            ✏️
+          </button>
+          <button id="editorBtnCopyMd" type="button" title="Copy Markdown">📋</button>
+        </div>
 
- <div class="btnSep" aria-hidden="true"></div>
+        <div
+          id="editorOverlayToolsPanel"
+          class="editorOverlayToolsPanel"
+          hidden
+          aria-label="Editor edit tools"
+        >
+          <div class="editorOverlayToolRow editorOverlayToolRowInsert" aria-label="Insert tools">
+            <button type="button" data-editor-command="link" title="Insert link">🔗</button>
+            <button type="button" data-editor-command="inlineCode" title="Inline code">
+              &lt;/&gt;
+            </button>
+            <button type="button" data-editor-command="bullet" title="Unordered list">•</button>
+            <button type="button" data-editor-command="ordered" title="Ordered list">1.</button>
+            <button
+              type="button"
+              data-editor-command="checkboxUnchecked"
+              title="Unchecked checkbox"
+            >
+              ⬜
+            </button>
+            <button type="button" data-editor-command="checkboxChecked" title="Checked checkbox">
+              ✅
+            </button>
+          </div>
 
-<div class="btnGroup" id="grpLevels">
-  <button id="btnExportMenu" title="Export options">⬇️ Export ▾</button>
-  <div id="exportMenu" class="menu" style="display:none"></div>
-</div>
+          <div
+            class="editorOverlayToolRow editorOverlayToolRowFormat"
+            aria-label="Formatting tools"
+          >
+            <button type="button" data-editor-command="bold" title="Bold">
+              <strong>B</strong>
+            </button>
+            <button type="button" data-editor-command="italic" title="Italic"><em>I</em></button>
+            <button type="button" data-editor-command="boldItalic" title="Bold Italic">
+              <strong><em>BI</em></strong>
+            </button>
+            <button type="button" data-editor-command="strike" title="Strikethrough">
+              <s>S</s>
+            </button>
+            <button type="button" data-editor-command="indent" title="Indent">↦</button>
+            <button type="button" data-editor-command="outdent" title="Outdent">↤</button>
+          </div>
 
+          <div class="editorOverlayToolRow editorOverlayToolRowHeading" aria-label="Heading tools">
+            <button type="button" data-heading-level="1" title="H1 Title">H1</button>
+            <button type="button" data-heading-level="2" title="H2 Section">H2</button>
+            <button type="button" data-heading-level="3" title="H3 Subsection">H3</button>
+            <button type="button" data-heading-level="4" title="H4">H4</button>
+            <button type="button" data-heading-level="5" title="H5">H5</button>
+            <button type="button" data-heading-level="0" title="Remove heading">↩</button>
+          </div>
+        </div>
 
- <span id="saveStatus"></span>
-</div>
-<div id="layout">
-<div id="editor">
-
-<div id="editorOverlayControls" aria-label="Editor controls">
-  <button id="editorBtnSearch" type="button" title="Search & Replace: Ctrl+F / Ctrl+H">🔍</button>
-  <button id="editorBtnEditToggle" type="button" title="Show edit tools" aria-expanded="false">✏️</button>
-  <button id="editorBtnCopyMd" type="button" title="Copy Markdown">📋</button>
-</div>
-
-<div id="editorOverlayToolsPanel" class="editorOverlayToolsPanel" hidden aria-label="Editor edit tools">
-  <div class="editorOverlayToolRow editorOverlayToolRowInsert" aria-label="Insert tools">
-    <button type="button" data-editor-command="link" title="Insert link">🔗</button>
-    <button type="button" data-editor-command="inlineCode" title="Inline code">&lt;/&gt;</button>
-    <button type="button" data-editor-command="bullet" title="Unordered list">•</button>
-    <button type="button" data-editor-command="ordered" title="Ordered list">1.</button>
-    <button type="button" data-editor-command="checkboxUnchecked" title="Unchecked checkbox">⬜</button>
-    <button type="button" data-editor-command="checkboxChecked" title="Checked checkbox">✅</button>
-  </div>
-
-  <div class="editorOverlayToolRow editorOverlayToolRowFormat" aria-label="Formatting tools">
-    <button type="button" data-editor-command="bold" title="Bold"><strong>B</strong></button>
-    <button type="button" data-editor-command="italic" title="Italic"><em>I</em></button>
-    <button type="button" data-editor-command="boldItalic" title="Bold Italic"><strong><em>BI</em></strong></button>
-    <button type="button" data-editor-command="strike" title="Strikethrough"><s>S</s></button>
-    <button type="button" data-editor-command="indent" title="Indent">↦</button>
-    <button type="button" data-editor-command="outdent" title="Outdent">↤</button>
-  </div>
-
-  <div class="editorOverlayToolRow editorOverlayToolRowHeading" aria-label="Heading tools">
-    <button type="button" data-heading-level="1" title="H1 Title">H1</button>
-    <button type="button" data-heading-level="2" title="H2 Section">H2</button>
-    <button type="button" data-heading-level="3" title="H3 Subsection">H3</button>
-    <button type="button" data-heading-level="4" title="H4">H4</button>
-    <button type="button" data-heading-level="5" title="H5">H5</button>
-    <button type="button" data-heading-level="0" title="Remove heading">↩</button>
-  </div>
-</div>
-
-  <div id="cmHost"></div>
-  <textarea id="md">
+        <div id="cmHost"></div>
+        <textarea id="md">
 
 # 🧠 Markmap Journal — Release 40 Dev Split
 
@@ -896,8 +924,8 @@
 	- raw frontmatter editor
 	- multi-window/multi-tab behavior
 	- full mobile support
-	
-- Consider the following 	
+
+- Consider the following
 	- Physical Markdown files are the truth.
 	- Frontmatter stores structure.
 	- The app editor shows clean body content.
@@ -905,104 +933,167 @@
 	- Archive replaces delete.
 	- Chrome is the target browser.
 
-    </textarea>
-  </div>
-  <div class="splitter" id="splitEditor"></div>
-  <div id="viewer">
-
-	<div id="mapPane">
-	  <div id="mapOverlayControls" aria-label="Mindmap controls">
-	  <button id="mapBtnLevelUp" type="button" title="Expand one level">➕</button>
-	  <button id="mapBtnLevelDown" type="button" title="Collapse one level">➖</button>
-	  <button id="mapBtnFit" type="button" title="Fit map">🎯</button>
-	  <button id="mapBtnExpandAll" type="button" title="Expand all">🔼</button>
-	  <button id="mapBtnCollapseAll" type="button" title="Collapse all">🔽</button>
-	  <button id="mapBtnTheme" type="button" title="Toggle dark/light mode">🌙</button>
-	  <button id="mapBtnStyle" type="button" title="Map style">🎨</button>
-	</div>
-
-	  <svg id="mapSvg"></svg>
-	</div>
-
-    <div class="splitter" id="splitHtml"></div>
-    <div id="htmlPane"></div>
-  </div>
-</div>
-<div id="logs">
-  <pre id="log"></pre>
-</div>
-<div id="toast" role="status" aria-live="polite"></div>
-
-
-<div id="mapStyleModal" class="styleModal" style="display:none" aria-modal="true" role="dialog">
-  <div class="styleModalPanel">
-    <div class="styleModalHeader">
-      <div>
-        <div class="styleModalTitle">🎨 Map Style</div>
-        <div class="styleModalSub">Theme, layout density, node length, and link style</div>
+    </textarea
+        >
       </div>
-      <button id="mapStyleClose" type="button" title="Close">×</button>
+      <div class="splitter" id="splitEditor"></div>
+      <div id="viewer">
+        <div id="mapPane">
+          <div id="mapOverlayControls" aria-label="Mindmap controls">
+            <button id="mapBtnLevelUp" type="button" title="Expand one level">➕</button>
+            <button id="mapBtnLevelDown" type="button" title="Collapse one level">➖</button>
+            <button id="mapBtnFit" type="button" title="Fit map">🎯</button>
+            <button id="mapBtnExpandAll" type="button" title="Expand all">🔼</button>
+            <button id="mapBtnCollapseAll" type="button" title="Collapse all">🔽</button>
+            <button id="mapBtnTheme" type="button" title="Toggle dark/light mode">🌙</button>
+            <button id="mapBtnStyle" type="button" title="Map style">🎨</button>
+          </div>
+
+          <svg id="mapSvg"></svg>
+        </div>
+
+        <div class="splitter" id="splitHtml"></div>
+        <div id="htmlPane"></div>
+      </div>
+    </div>
+    <div id="logs">
+      <pre id="log"></pre>
+    </div>
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <div
+      id="mapStyleModal"
+      class="styleModal"
+      style="display: none"
+      aria-modal="true"
+      role="dialog"
+    >
+      <div class="styleModalPanel">
+        <div class="styleModalHeader">
+          <div>
+            <div class="styleModalTitle">🎨 Map Style</div>
+            <div class="styleModalSub">Theme, layout density, node length, and link style</div>
+          </div>
+          <button id="mapStyleClose" type="button" title="Close">×</button>
+        </div>
+
+        <div class="styleModalBody">
+          <section class="styleSection">
+            <h3>Theme</h3>
+            <div id="mapStyleThemeOptions" class="styleOptionGrid"></div>
+          </section>
+
+          <section class="styleSection">
+            <h3>Layout</h3>
+            <div id="mapStyleLayoutOptions" class="styleOptionGrid"></div>
+          </section>
+
+          <section class="styleSection">
+            <h3>Node length</h3>
+            <div id="mapStyleNodeLengthOptions" class="styleOptionGrid"></div>
+          </section>
+
+          <section class="styleSection">
+            <h3>Links</h3>
+            <div id="mapStyleLinkOptions" class="styleOptionGrid"></div>
+          </section>
+        </div>
+
+        <div class="styleModalFooter">
+          <button id="mapStyleReset" type="button">Reset to Default</button>
+          <button id="mapStyleApply" type="button">Apply</button>
+        </div>
+      </div>
     </div>
 
-    <div class="styleModalBody">
-      <section class="styleSection">
-        <h3>Theme</h3>
-        <div id="mapStyleThemeOptions" class="styleOptionGrid"></div>
-      </section>
+    <!-- Template Editor Modal -->
+    <div
+      id="tplModal"
+      style="
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 20000;
+      "
+    >
+      <div
+        style="
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          width: min(920px, 92vw);
+          height: min(720px, 86vh);
+          background: var(--menu-bg);
+          color: var(--text);
+          border: 1px solid var(--menu-border);
+          border-radius: 12px;
+          box-shadow: 0 16px 60px rgba(0, 0, 0, 0.28);
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        "
+      >
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--menu-border);
+          "
+        >
+          <strong
+            id="tplModalTitle"
+            style="
+              font-size: 14px;
+              flex: 1;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            "
+            >Edit template</strong
+          >
+          <button id="tplModalCancel" type="button" style="height: 30px">Cancel</button>
+          <button id="tplModalSave" type="button" style="height: 30px">Save</button>
+        </div>
 
-      <section class="styleSection">
-        <h3>Layout</h3>
-        <div id="mapStyleLayoutOptions" class="styleOptionGrid"></div>
-      </section>
+        <textarea
+          id="tplModalText"
+          style="
+            flex: 1;
+            width: 100%;
+            border: 0;
+            padding: 12px;
+            resize: none;
+            outline: none;
+            font:
+              12px ui-monospace,
+              SFMono-Regular,
+              Menlo,
+              Monaco,
+              Consolas,
+              'Liberation Mono',
+              monospace;
+            background: var(--editor-bg);
+            color: var(--text);
+          "
+          spellcheck="false"
+        ></textarea>
 
-      <section class="styleSection">
-        <h3>Node length</h3>
-        <div id="mapStyleNodeLengthOptions" class="styleOptionGrid"></div>
-      </section>
-
-      <section class="styleSection">
-        <h3>Links</h3>
-        <div id="mapStyleLinkOptions" class="styleOptionGrid"></div>
-      </section>
+        <div
+          style="
+            padding: 8px 12px;
+            border-top: 1px solid var(--menu-border);
+            font-size: 12px;
+            opacity: 0.8;
+          "
+        >
+          Tip: Use normal multi-line editing here. Markdown headings (##) work great in Markmap.
+        </div>
+      </div>
     </div>
-
-    <div class="styleModalFooter">
-      <button id="mapStyleReset" type="button">Reset to Default</button>
-      <button id="mapStyleApply" type="button">Apply</button>
-    </div>
-  </div>
-</div>
-
-
-
-
-
-
-
-<!-- Template Editor Modal -->
-<div id="tplModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:20000;">
-  <div style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-              width:min(920px, 92vw); height:min(720px, 86vh);
-              background:var(--menu-bg); color:var(--text);
-              border:1px solid var(--menu-border); border-radius:12px;
-              box-shadow:0 16px 60px rgba(0,0,0,.28); display:flex; flex-direction:column; overflow:hidden;">
-    <div style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--menu-border);">
-      <strong id="tplModalTitle" style="font-size:14px; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Edit template</strong>
-      <button id="tplModalCancel" type="button" style="height:30px;">Cancel</button>
-      <button id="tplModalSave" type="button" style="height:30px;">Save</button>
-    </div>
-
-    <textarea id="tplModalText"
-      style="flex:1; width:100%; border:0; padding:12px; resize:none; outline:none;
-             font: 12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
-             background:var(--editor-bg); color:var(--text);"
-      spellcheck="false"></textarea>
-
-    <div style="padding:8px 12px; border-top:1px solid var(--menu-border); font-size:12px; opacity:.8;">
-      Tip: Use normal multi-line editing here. Markdown headings (##) work great in Markmap.
-    </div>
-  </div>
-</div>
-<script type="module" src="./js/main.js"></script>
-</body>
+    <script type="module" src="./main.js"></script>
+  </body>
 </html>
